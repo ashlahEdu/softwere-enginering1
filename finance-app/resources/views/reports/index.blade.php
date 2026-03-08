@@ -42,35 +42,46 @@
         </div>
 
         <!-- AI Q&A Assistant -->
-        <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-sm" x-data="{ question: '', answer: '', loading: false }">
+        <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-sm" x-data="{ question: '', answer: '', errorMsg: '', loading: false }">
             <h2 class="text-lg font-semibold text-slate-900 mb-4">🤖 AI Financial Assistant</h2>
-            <p class="text-sm text-slate-500 mb-4">Ask questions about your financial data. The AI will answer based only on your actual records.</p>
-            
+            <p class="text-sm text-slate-500 mb-4">Tanyakan apa saja tentang data keuangan. AI akan menjawab berdasarkan data aktual.</p>
+
             <div class="space-y-4">
-                <textarea x-model="question" rows="3" class="w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm" placeholder="e.g., What is our biggest expense category?"></textarea>
-                
-                <button 
+                <textarea x-model="question" rows="3" class="w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm" placeholder="Contoh: Berapa total pengeluaran bulan ini? Siapa yang paling banyak pengeluarannya?"></textarea>
+
+                <button
                     @click="
                         if (!question.trim()) return;
-                        loading = true; answer = '';
+                        loading = true; answer = ''; errorMsg = '';
                         fetch('{{ route('reports.askAI') }}', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
                             body: JSON.stringify({ question })
                         })
                         .then(r => r.json())
-                        .then(data => { answer = data.answer || data.error; loading = false; })
-                        .catch(() => { answer = 'Request failed.'; loading = false; });
+                        .then(data => {
+                            loading = false;
+                            if (data.answer) { answer = data.answer; errorMsg = ''; }
+                            else { errorMsg = data.error || 'Terjadi kesalahan tidak diketahui.'; answer = ''; }
+                        })
+                        .catch(err => { loading = false; errorMsg = 'Gagal terhubung ke server: ' + err.message; answer = ''; });
                     "
                     :disabled="loading"
                     class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
                 >
-                    <span x-show="!loading">Ask AI</span>
-                    <span x-show="loading">Thinking...</span>
+                    <span x-show="!loading">Tanya AI</span>
+                    <span x-show="loading">Sedang berpikir...</span>
                 </button>
 
+                <!-- Error Box -->
+                <div x-show="errorMsg" class="bg-red-50 border border-red-200 rounded-md p-4">
+                    <div class="text-xs font-medium text-red-600 mb-1">⚠️ Error:</div>
+                    <div x-text="errorMsg" class="text-sm text-red-700 whitespace-pre-wrap"></div>
+                </div>
+
+                <!-- Answer Box -->
                 <div x-show="answer" class="bg-slate-50 border border-slate-200 rounded-md p-4">
-                    <div class="text-xs font-medium text-slate-500 mb-2">AI Response:</div>
+                    <div class="text-xs font-medium text-blue-600 mb-2">🤖 Jawaban AI:</div>
                     <div x-text="answer" class="text-sm text-slate-700 whitespace-pre-wrap"></div>
                 </div>
             </div>
