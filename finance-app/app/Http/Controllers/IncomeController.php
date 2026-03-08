@@ -25,7 +25,7 @@ class IncomeController extends Controller
             'description' => 'nullable|string',
             'member_id' => 'nullable|exists:members,id',
         ]);
-
+             
         Income::create($validated);
 
         return redirect()->route('income.index')->with('success', 'Income recorded successfully!');

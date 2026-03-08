@@ -14,6 +14,8 @@ class DashboardController extends Controller
         $totalIncome = Income::sum('amount');
         $totalExpenses = Expense::sum('amount');
         $totalBalance = $totalIncome - $totalExpenses;
+
+        
         
         $recentTransactions = collect()
             ->merge(Income::latest()->take(5)->get()->map(fn($i) => [
